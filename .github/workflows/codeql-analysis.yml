@@ -1,0 +1,48 @@
+name: "CodeQL Analysis for ASP.NET Core"
+
+on:
+  workflow_dispatch:  # Manuel tetikleme için ekliyoruz
+  push:
+    branches:
+      - main  # Ana dalda değişiklik yapıldığında tetiklenir
+  pull_request:
+    branches:
+      - main  # Ana dalda pull request yapıldığında tetiklenir
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    strategy:
+      matrix:
+        language: ['csharp']  # Eğer projede başka diller varsa, burada ekleyebilirsiniz.
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4  # Depoyu çeker
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '6.0.x'  # .NET 6 sürümünü kullanabilirsiniz. Eğer .NET 8 kullanıyorsanız, '8.0.x' kullanabilirsiniz.
+
+      - name: Restore dependencies
+        run: |
+          dotnet restore  # Bağımlılıkları geri yükler
+
+      - name: Build the project
+        run: |
+          dotnet build --configuration Release  # Projeyi derler
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}  # Dil ayarını buradan alır.
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3  # CodeQL analizi yapar
